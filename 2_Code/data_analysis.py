@@ -1,20 +1,50 @@
 """
-数据后处理与分析模块：用于对模拟结果进行分析。
+数据分析模块 - 计算统计量、检测特征等
 """
 import numpy as np
-import pandas as pd
 
-def analyze_data(data):
-    """
-    示例：对模拟数据进行基本分析。
-    """
-    print("Analyzing data...")
-    # 这里可以进行统计分析、特征提取等
-    # 例如：计算平均值、标准差、拟合曲线等
-    # analyzed_result = {
-    #     'mean': np.mean(data),
-    #     'std': np.std(data)
-    # }
-    return data # 暂时返回原始数据
+def detect_secondary_pulse(luminosity, time_points):
+    """检测光变曲线中的次级脉冲"""
+    if len(luminosity) < 5:
+        return None
+    
+    peak_idx = np.argmax(luminosity)
+    if peak_idx >= len(luminosity) - 2:
+        return None
+    
+    # 寻找主峰后的次级峰
+    secondary_peak = max(luminosity[peak_idx+1:])
+    if secondary_peak > 0.3 * luminosity[peak_idx]:
+        secondary_idx = np.argmax(luminosity[peak_idx+1:]) + peak_idx + 1
+        return {
+            'time': time_points[secondary_idx],
+            'amplitude': secondary_peak,
+            'relative_amplitude': secondary_peak / luminosity[peak_idx]
+        }
+    return None
 
-# 可以添加更多数据分析函数
+def calculate_statistics(luminosity):
+    """计算光变曲线的基本统计量"""
+    if not luminosity:
+        return {}
+    
+    return {
+        'max_luminosity': max(luminosity),
+        'min_luminosity': min(luminosity),
+        'mean_luminosity': np.mean(luminosity),
+        'std_luminosity': np.std(luminosity)
+    }
+
+def analyze_simulation(results):
+    """分析模拟结果"""
+    analysis = {}
+    
+    # 计算基本统计量
+    analysis['statistics'] = calculate_statistics(results['luminosity'])
+    
+    # 检测次级脉冲
+    secondary_pulse = detect_secondary_pulse(results['luminosity'], results['time_points'])
+    if secondary_pulse:
+        analysis['secondary_pulse'] = secondary_pulse
+    
+    return analysis
