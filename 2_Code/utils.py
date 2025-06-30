@@ -1,25 +1,25 @@
-"""
-工具函数模块：包含一些通用的辅助函数。
-"""
+import os
+import getpass
+import numpy as np
 
-def load_parameters(filepath):
-    """
-    示例：从文件加载参数。
-    """
-    print(f"Loading parameters from {filepath}...")
-    # 实际实现可能涉及读取JSON, YAML或其他格式的文件
-    parameters = {
-        "param1": 10,
-        "param2": "value"
-    }
-    return parameters
+def get_desktop_path():
+    """获取当前用户的Windows桌面路径"""
+    username = getpass.getuser()
+    return os.path.join("C:\\Users", username, "Desktop")
 
-def save_results(filepath, results):
-    """
-    示例：将结果保存到文件。
-    """
-    print(f"Saving results to {filepath}...")
-    # 实际实现可能涉及写入CSV, JSON, HDF5等格式的文件
-    pass
-
-# 可以添加更多工具函数
+def initialize_temperature_field(Lx, Ly, nx, ny, T_background, T_ignition, ignition_radius):
+    """初始化温度场"""
+    x = np.linspace(0, Lx, nx)
+    y = np.linspace(0, Ly, ny)
+    X, Y = np.meshgrid(x, y, indexing='ij')
+    
+    T = np.full((nx, ny), T_background, dtype=np.float64)
+    center_x, center_y = Lx/2, Ly/2
+    
+    for i in range(nx):
+        for j in range(ny):
+            dist_sq = (x[i] - center_x)**2 + (y[j] - center_y)**2
+            if dist_sq <= ignition_radius**2:
+                T[i, j] = T_ignition
+                
+    return T, X, Y
