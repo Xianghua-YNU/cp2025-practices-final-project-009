@@ -1,50 +1,33 @@
-"""
-数据分析模块 - 计算统计量、检测特征等
-"""
 import numpy as np
 
 def detect_secondary_pulse(luminosity, time_points):
     """检测光变曲线中的次级脉冲"""
-    if len(luminosity) < 5:
-        return None
-    
-    peak_idx = np.argmax(luminosity)
-    if peak_idx >= len(luminosity) - 2:
-        return None
-    
-    # 寻找主峰后的次级峰
-    secondary_peak = max(luminosity[peak_idx+1:])
-    if secondary_peak > 0.3 * luminosity[peak_idx]:
-        secondary_idx = np.argmax(luminosity[peak_idx+1:]) + peak_idx + 1
-        return {
-            'time': time_points[secondary_idx],
-            'amplitude': secondary_peak,
-            'relative_amplitude': secondary_peak / luminosity[peak_idx]
-        }
+    if len(luminosity) > 5:
+        peak_idx = np.argmax(luminosity)
+        if peak_idx < len(luminosity) - 2:
+            # 寻找主峰后的次级峰
+            secondary_peak = max(luminosity[peak_idx+1:])
+            if secondary_peak > 0.3 * luminosity[peak_idx]:
+                secondary_idx = np.argmax(luminosity[peak_idx+1:]) + peak_idx + 1
+                return time_points[secondary_idx]
     return None
 
-def calculate_statistics(luminosity):
-    """计算光变曲线的基本统计量"""
-    if not luminosity:
-        return {}
+def calculate_parameter_relations():
+    """计算参数关系 (D-P和ε₀-A)"""
+    D_values = np.logspace(3, 4, 5) * 1e-4  # 减少数据点数量
+    epsilon_values = np.logspace(17, 18, 5) * 1e-4
+
+    # 计算周期和振幅关系
+    P_2d = 4.2 / np.sqrt(D_values)
+    P_1d = 2.5 / np.sqrt(D_values)
+    A_2d = 2.51 * np.log10(epsilon_values) - 10.2
+    A_1d = 3.01 * np.log10(epsilon_values) - 12.5
     
     return {
-        'max_luminosity': max(luminosity),
-        'min_luminosity': min(luminosity),
-        'mean_luminosity': np.mean(luminosity),
-        'std_luminosity': np.std(luminosity)
+        'D_values': D_values,
+        'epsilon_values': epsilon_values,
+        'P_2d': P_2d,
+        'P_1d': P_1d,
+        'A_2d': A_2d,
+        'A_1d': A_1d
     }
-
-def analyze_simulation(results):
-    """分析模拟结果"""
-    analysis = {}
-    
-    # 计算基本统计量
-    analysis['statistics'] = calculate_statistics(results['luminosity'])
-    
-    # 检测次级脉冲
-    secondary_pulse = detect_secondary_pulse(results['luminosity'], results['time_points'])
-    if secondary_pulse:
-        analysis['secondary_pulse'] = secondary_pulse
-    
-    return analysis
