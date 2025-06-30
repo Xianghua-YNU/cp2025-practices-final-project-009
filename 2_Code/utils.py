@@ -1,22 +1,25 @@
-"""
-工具函数模块 - 通用辅助功能
-"""
 import os
 import getpass
+import numpy as np
 
 def get_desktop_path():
     """获取当前用户的Windows桌面路径"""
     username = getpass.getuser()
     return os.path.join("C:\\Users", username, "Desktop")
 
-def print_simulation_params(params):
-    """打印模拟参数"""
-    print("\n=== 模拟参数 ===")
-    print(f"计算域尺寸: {params['Lx']/1000:.1f}km × {params['Ly']/1000:.1f}km")
-    print(f"网格数: {params['nx']}×{params['ny']}")
-    print(f"空间步长: {params['dx']:.1f}m × {params['dy']:.1f}m")
-    print(f"热扩散系数: {params['D']:.2e} m²/s")
-    print(f"反应强度: {params['epsilon0']:.2e} J/kg/s")
-    print(f"活化能/kB: {params['Ea_over_kB']:.2e} K")
-    print(f"密度: {params['rho']:.2e} kg/m³")
-    print(f"总模拟时间: {params['total_time']}秒")
+def initialize_temperature_field(Lx, Ly, nx, ny, T_background, T_ignition, ignition_radius):
+    """初始化温度场"""
+    x = np.linspace(0, Lx, nx)
+    y = np.linspace(0, Ly, ny)
+    X, Y = np.meshgrid(x, y, indexing='ij')
+    
+    T = np.full((nx, ny), T_background, dtype=np.float64)
+    center_x, center_y = Lx/2, Ly/2
+    
+    for i in range(nx):
+        for j in range(ny):
+            dist_sq = (x[i] - center_x)**2 + (y[j] - center_y)**2
+            if dist_sq <= ignition_radius**2:
+                T[i, j] = T_ignition
+                
+    return T, X, Y
